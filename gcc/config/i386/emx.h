@@ -44,7 +44,7 @@ Boston, MA 02111-1307, USA.  */
 #define DEFAULT_GDB_EXTENSIONS          1
 #define DBX_DEBUGGING_INFO              1
 #define DWARF2_DEBUGGING_INFO           1
-#define PREFERRED_DEBUGGING_TYPE    DWARF2_DEBUG
+#define PREFERRED_DEBUGGING_TYPE    DBX_DEBUG
 
 /* headers */
 #include <stdio.h>              /* for FILE* */
