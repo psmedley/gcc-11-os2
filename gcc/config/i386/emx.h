@@ -613,6 +613,7 @@ do {                                                                    \
     }                                                                          \
   }
 
+struct cl_decoded_option;
 extern void emx_driver_init (unsigned int *,struct cl_decoded_option **);
 #define GCC_DRIVER_HOST_INITIALIZATION \
         emx_driver_init (&decoded_options_count, &decoded_options)
