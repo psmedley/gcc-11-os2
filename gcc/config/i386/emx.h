@@ -22,6 +22,7 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
+
 /* Use #ifdef EMX for issues needed by EMX target.
    Use #ifdef __EMX__ for issues needed on a EMX host.
    Note that the cross-compiler is untested  */
@@ -44,7 +45,7 @@ Boston, MA 02111-1307, USA.  */
 #define DEFAULT_GDB_EXTENSIONS          1
 #define DBX_DEBUGGING_INFO              1
 #define DWARF2_DEBUGGING_INFO           1
-#define PREFERRED_DEBUGGING_TYPE    DWARF2_DEBUG
+#define PREFERRED_DEBUGGING_TYPE    DBX_DEBUG
 
 /* headers */
 #include <stdio.h>              /* for FILE* */
@@ -613,6 +614,7 @@ do {                                                                    \
     }                                                                          \
   }
 
+struct cl_decoded_option;
 extern void emx_driver_init (unsigned int *,struct cl_decoded_option **);
 #define GCC_DRIVER_HOST_INITIALIZATION \
         emx_driver_init (&decoded_options_count, &decoded_options)
