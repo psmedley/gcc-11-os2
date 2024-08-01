@@ -3397,22 +3397,18 @@ Adapteva Epiphany.  This configuration is intended for embedded systems.
 
 We support FreeBSD using the ELF file format with DWARF 2 debugging for
 all CPU architectures.  There are no known issues with mixing object
-files and libraries with different debugging formats.  Otherwise, this
-release of GCC should now match more of the configuration used in the
-stock FreeBSD configuration of GCC.  In particular, '--enable-threads'
-is now configured by default.  However, as a general user, do not
-attempt to replace the system compiler with this release.  Known to
-bootstrap and check with good results on FreeBSD 7.2-STABLE.  In the
-past, known to bootstrap and check with good results on FreeBSD 3.0,
-3.4, 4.0, 4.2, 4.3, 4.4, 4.5, 4.8, 4.9 and 5-CURRENT.
+files and libraries with different debugging formats.
 
-   The version of binutils installed in '/usr/bin' probably works with
-this release of GCC.  Bootstrapping against the latest GNU binutils
-and/or the version found in '/usr/ports/devel/binutils' has been known
-to enable additional features and improve overall testsuite results.
-However, it is currently known that boehm-gc may not configure properly
-on FreeBSD prior to the FreeBSD 7.0 release with GNU binutils after
-2.16.1.
+   We recommend bootstrapping against the latest GNU binutils or the
+version found in the 'devel/binutils' port.  This also has been known to
+enable additional features and improve overall testsuite results.
+
+   Ada and D (or rather their respective libraries) are broken on
+FreeBSD/i386.  This also affects building 32-bit libraries on
+FreeBSD/amd64, so configure with '--disable-multilib' there in case you
+are building one of these front ends.
+
+   Go (or rather libgo) is generally broken on FreeBSD.
 
 ft32-*-elf
 ==========
@@ -3605,12 +3601,6 @@ ia64-*-hpux*
 Building GCC on this target requires the GNU Assembler.  The bundled HP
 assembler will not work.  To prevent GCC from using the wrong assembler,
 the option '--with-gnu-as' may be necessary.
-
-   The GCC libunwind library has not been ported to HPUX.  This means
-that for GCC versions 3.2.3 and earlier, '--enable-libunwind-exceptions'
-is required to build GCC.  For GCC 3.3 and later, this is the default.
-For gcc 3.4.3 and later, '--enable-libunwind-exceptions' is removed and
-the system libunwind library will always be used.
 
 *-ibm-aix*
 ==========
@@ -4973,73 +4963,73 @@ Ref: cris149836
 Ref: dos150162
 Ref: epiphany-x-elf150487
 Ref: x-x-freebsd150592
-Ref: ft32-x-elf151727
-Ref: h8300-hms151825
-Ref: hppa-hp-hpux152177
-Ref: hppa-hp-hpux11153691
-Ref: x-x-linux-gnu158797
-Ref: ix86-x-linux159120
-Ref: ix86-x-solaris2159433
-Ref: ia64-x-linux159681
-Ref: ia64-x-hpux159928
-Ref: x-ibm-aix160483
-Ref: TransferAixShobj164145
-Ref: iq2000-x-elf167955
-Ref: lm32-x-elf168095
-Ref: lm32-x-uclinux168199
-Ref: loongarch168327
-Ref: m32c-x-elf168964
-Ref: m32r-x-elf169066
-Ref: m68k-x-x169168
-Ref: m68k-x-uclinux170206
-Ref: microblaze-x-elf170451
-Ref: mips-x-x170570
-Ref: moxie-x-elf172480
-Ref: msp430-x-elf172527
-Ref: nds32le-x-elf173084
-Ref: nds32be-x-elf173156
-Ref: nvptx-x-none173225
-Ref: or1k-x-elf174088
-Ref: or1k-x-linux174219
-Ref: powerpc-x-x174300
-Ref: powerpc-x-darwin174491
-Ref: powerpc-x-elf174986
-Ref: powerpc-x-linux-gnu175071
-Ref: powerpc-x-netbsd175166
-Ref: powerpc-x-eabisim175254
-Ref: powerpc-x-eabi175380
-Ref: powerpcle-x-elf175456
-Ref: powerpcle-x-eabisim175548
-Ref: powerpcle-x-eabi175681
-Ref: rl78-x-elf175764
-Ref: riscv32-x-elf175870
-Ref: riscv32-x-linux176059
-Ref: riscv64-x-elf176216
-Ref: riscv64-x-linux176405
-Ref: rx-x-elf176562
-Ref: s390-x-linux176608
-Ref: s390x-x-linux176680
-Ref: s390x-ibm-tpf176767
-Ref: x-x-solaris2176898
-Ref: sparc-x-x180671
-Ref: sparc-sun-solaris2181173
-Ref: sparc-x-linux182072
-Ref: sparc64-x-solaris2182103
-Ref: sparcv9-x-solaris2182190
-Ref: c6x-x-x182911
-Ref: visium-x-elf183003
-Ref: x-x-vxworks183111
-Ref: x86-64-x-x184634
-Ref: x86-64-x-solaris2184962
-Ref: xtensa-x-elf185588
-Ref: xtensa-x-linux186259
-Ref: windows186600
-Ref: x-x-cygwin188247
-Ref: x-x-mingw32188800
-Ref: older189182
-Ref: elf191299
-Node: GNU Free Documentation License191553
-Node: Concept Index216691
+Ref: ft32-x-elf151320
+Ref: h8300-hms151418
+Ref: hppa-hp-hpux151770
+Ref: hppa-hp-hpux11153284
+Ref: x-x-linux-gnu158390
+Ref: ix86-x-linux158713
+Ref: ix86-x-solaris2159026
+Ref: ia64-x-linux159274
+Ref: ia64-x-hpux159521
+Ref: x-ibm-aix159739
+Ref: TransferAixShobj163401
+Ref: iq2000-x-elf167211
+Ref: lm32-x-elf167351
+Ref: lm32-x-uclinux167455
+Ref: loongarch167583
+Ref: m32c-x-elf168220
+Ref: m32r-x-elf168322
+Ref: m68k-x-x168424
+Ref: m68k-x-uclinux169462
+Ref: microblaze-x-elf169707
+Ref: mips-x-x169826
+Ref: moxie-x-elf171736
+Ref: msp430-x-elf171783
+Ref: nds32le-x-elf172340
+Ref: nds32be-x-elf172412
+Ref: nvptx-x-none172481
+Ref: or1k-x-elf173344
+Ref: or1k-x-linux173475
+Ref: powerpc-x-x173556
+Ref: powerpc-x-darwin173747
+Ref: powerpc-x-elf174242
+Ref: powerpc-x-linux-gnu174327
+Ref: powerpc-x-netbsd174422
+Ref: powerpc-x-eabisim174510
+Ref: powerpc-x-eabi174636
+Ref: powerpcle-x-elf174712
+Ref: powerpcle-x-eabisim174804
+Ref: powerpcle-x-eabi174937
+Ref: rl78-x-elf175020
+Ref: riscv32-x-elf175126
+Ref: riscv32-x-linux175315
+Ref: riscv64-x-elf175472
+Ref: riscv64-x-linux175661
+Ref: rx-x-elf175818
+Ref: s390-x-linux175864
+Ref: s390x-x-linux175936
+Ref: s390x-ibm-tpf176023
+Ref: x-x-solaris2176154
+Ref: sparc-x-x179927
+Ref: sparc-sun-solaris2180429
+Ref: sparc-x-linux181328
+Ref: sparc64-x-solaris2181359
+Ref: sparcv9-x-solaris2181446
+Ref: c6x-x-x182167
+Ref: visium-x-elf182259
+Ref: x-x-vxworks182367
+Ref: x86-64-x-x183890
+Ref: x86-64-x-solaris2184218
+Ref: xtensa-x-elf184844
+Ref: xtensa-x-linux185515
+Ref: windows185856
+Ref: x-x-cygwin187503
+Ref: x-x-mingw32188056
+Ref: older188438
+Ref: elf190555
+Node: GNU Free Documentation License190809
+Node: Concept Index215947
 
 End Tag Table
 

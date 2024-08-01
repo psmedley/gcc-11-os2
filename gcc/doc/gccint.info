@@ -55,7 +55,7 @@ Introduction
 This manual documents the internals of the GNU compilers, including how
 to port them to new targets and some information about how to write
 front ends for new languages.  It corresponds to the compilers (GCC)
-version 14.1.0.  The use of the GNU compilers is documented in a
+version 14.2.0.  The use of the GNU compilers is documented in a
 separate manual.  *Note Introduction: (gcc)Top.
 
  This manual is mainly a reference manual rather than a tutorial.  It
@@ -43810,6 +43810,14 @@ File: gccint.info,  Node: C++ ABI,  Next: D Language and ABI,  Prev: PCH Target,
      shared libraries are run in the correct order when the libraries
      are unloaded.  The default is to return false.
 
+ -- Target Hook: tree TARGET_CXX_ADJUST_CDTOR_CALLABI_FNTYPE (tree
+          FNTYPE)
+     This hook returns a possibly modified 'FUNCTION_TYPE' for arguments
+     to '__cxa_atexit', '__cxa_thread_atexit' or '__cxa_throw' function
+     pointers.  ABIs like mingw32 require special attributes to be added
+     to function types pointed to by arguments of these functions.  The
+     default is to return the passed argument unmodified.
+
  -- Target Hook: void TARGET_CXX_ADJUST_CLASS_AT_DEFINITION (tree TYPE)
      TYPE is a C++ class (i.e., RECORD_TYPE or UNION_TYPE) that has just
      been defined.  Use this hook to make adjustments to the class (eg,
@@ -58672,11 +58680,12 @@ Concept Index
 * TARGET_CPU_CPP_BUILTINS:               Run-time Target.    (line    8)
 * TARGET_CSTORE_MODE:                    Register Classes.   (line  676)
 * TARGET_CUSTOM_FUNCTION_DESCRIPTORS:    Trampolines.        (line   43)
-* TARGET_CXX_ADJUST_CLASS_AT_DEFINITION: C++ ABI.            (line   86)
+* TARGET_CXX_ADJUST_CDTOR_CALLABI_FNTYPE: C++ ABI.           (line   86)
+* TARGET_CXX_ADJUST_CLASS_AT_DEFINITION: C++ ABI.            (line   94)
 * TARGET_CXX_CDTOR_RETURNS_THIS:         C++ ABI.            (line   37)
 * TARGET_CXX_CLASS_DATA_ALWAYS_COMDAT:   C++ ABI.            (line   61)
 * TARGET_CXX_COOKIE_HAS_SIZE:            C++ ABI.            (line   24)
-* TARGET_CXX_DECL_MANGLING_CONTEXT:      C++ ABI.            (line   92)
+* TARGET_CXX_DECL_MANGLING_CONTEXT:      C++ ABI.            (line  100)
 * TARGET_CXX_DETERMINE_CLASS_DATA_VISIBILITY: C++ ABI.       (line   52)
 * TARGET_CXX_GET_COOKIE_SIZE:            C++ ABI.            (line   17)
 * TARGET_CXX_GUARD_MASK_BIT:             C++ ABI.            (line   11)
@@ -60106,63 +60115,63 @@ Node: Emulated TLS1892377
 Node: MIPS Coprocessors1895767
 Node: PCH Target1896926
 Node: C++ ABI1898768
-Node: D Language and ABI1903560
-Node: Rust Language and ABI1906785
-Node: Named Address Spaces1907524
-Node: Misc1913566
-Ref: TARGET_SHIFT_TRUNCATION_MASK1921437
-Node: Host Config1983500
-Node: Host Common1984569
-Node: Filesystem1986943
-Node: Host Misc1991058
-Node: Fragments1993507
-Node: Target Fragment1994702
-Node: Host Fragment2005514
-Node: Collect22005754
-Node: Header Dirs2008390
-Node: Type Information2009813
-Node: GTY Options2013344
-Node: Inheritance and GTY2026490
-Ref: Inheritance and GTY-Footnote-12028055
-Node: User GC2028325
-Node: GGC Roots2032076
-Node: Files2032789
-Node: Invoking the garbage collector2035420
-Node: Troubleshooting2037062
-Node: Plugins2038137
-Node: Plugins loading2039266
-Node: Plugin API2040362
-Node: Plugins pass2048229
-Node: Plugins GC2050200
-Node: Plugins description2051917
-Node: Plugins attr2052453
-Node: Plugins recording2054733
-Node: Plugins gate2055583
-Node: Plugins tracking2056174
-Node: Plugins building2056762
-Node: LTO2060265
-Node: LTO Overview2061137
-Node: LTO object file layout2066893
-Node: IPA2071392
-Node: WHOPR2080444
-Node: Internal flags2085004
-Node: Match and Simplify2086415
-Node: GIMPLE API2087385
-Node: The Language2090187
-Node: Static Analyzer2102814
-Node: Analyzer Internals2103079
-Node: Debugging the Analyzer2119044
-Node: User Experience Guidelines2126702
-Node: Guidelines for Diagnostics2127638
-Ref: input_location_example2135813
-Node: Guidelines for Options2145498
-Node: Funding2145675
-Node: GNU Project2148182
-Node: Copying2148833
-Node: GNU Free Documentation License2186350
-Node: Contributors2211476
-Node: Option Index2252680
-Node: Concept Index2253557
+Node: D Language and ABI1903994
+Node: Rust Language and ABI1907219
+Node: Named Address Spaces1907958
+Node: Misc1914000
+Ref: TARGET_SHIFT_TRUNCATION_MASK1921871
+Node: Host Config1983934
+Node: Host Common1985003
+Node: Filesystem1987377
+Node: Host Misc1991492
+Node: Fragments1993941
+Node: Target Fragment1995136
+Node: Host Fragment2005948
+Node: Collect22006188
+Node: Header Dirs2008824
+Node: Type Information2010247
+Node: GTY Options2013778
+Node: Inheritance and GTY2026924
+Ref: Inheritance and GTY-Footnote-12028489
+Node: User GC2028759
+Node: GGC Roots2032510
+Node: Files2033223
+Node: Invoking the garbage collector2035854
+Node: Troubleshooting2037496
+Node: Plugins2038571
+Node: Plugins loading2039700
+Node: Plugin API2040796
+Node: Plugins pass2048663
+Node: Plugins GC2050634
+Node: Plugins description2052351
+Node: Plugins attr2052887
+Node: Plugins recording2055167
+Node: Plugins gate2056017
+Node: Plugins tracking2056608
+Node: Plugins building2057196
+Node: LTO2060699
+Node: LTO Overview2061571
+Node: LTO object file layout2067327
+Node: IPA2071826
+Node: WHOPR2080878
+Node: Internal flags2085438
+Node: Match and Simplify2086849
+Node: GIMPLE API2087819
+Node: The Language2090621
+Node: Static Analyzer2103248
+Node: Analyzer Internals2103513
+Node: Debugging the Analyzer2119478
+Node: User Experience Guidelines2127136
+Node: Guidelines for Diagnostics2128072
+Ref: input_location_example2136247
+Node: Guidelines for Options2145932
+Node: Funding2146109
+Node: GNU Project2148616
+Node: Copying2149267
+Node: GNU Free Documentation License2186784
+Node: Contributors2211910
+Node: Option Index2253114
+Node: Concept Index2253991
 
 End Tag Table
 

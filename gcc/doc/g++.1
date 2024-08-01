@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCC 1"
-.TH GCC 1 "2024-05-07" "gcc-14.1.0" "GNU"
+.TH GCC 1 "2024-08-01" "gcc-14.2.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -20577,8 +20577,8 @@ performance of the code.  Permissible values for this option are:
 \&\fBcortex\-a78\fR, \fBcortex\-a78ae\fR, \fBcortex\-a78c\fR,
 \&\fBares\fR, \fBexynos\-m1\fR, \fBemag\fR, \fBfalkor\fR,
 \&\fBneoverse\-512tvb\fR, \fBneoverse\-e1\fR, \fBneoverse\-n1\fR,
-\&\fBneoverse\-n2\fR, \fBneoverse\-v1\fR, \fBneoverse\-v2\fR, \fBqdf24xx\fR,
-\&\fBsaphira\fR, \fBphecda\fR, \fBxgene1\fR, \fBvulcan\fR,
+\&\fBneoverse\-n2\fR, \fBneoverse\-v1\fR, \fBneoverse\-v2\fR, \fBgrace\fR,
+\&\fBqdf24xx\fR, \fBsaphira\fR, \fBphecda\fR, \fBxgene1\fR, \fBvulcan\fR,
 \&\fBocteontx\fR, \fBocteontx81\fR,  \fBocteontx83\fR,
 \&\fBocteontx2\fR, \fBocteontx2t98\fR, \fBocteontx2t96\fR
 \&\fBocteontx2t93\fR, \fBocteontx2f95\fR, \fBocteontx2f95n\fR,
@@ -33806,8 +33806,10 @@ instruction set support.
 .IP "\fBlujiazui\fR" 4
 .IX Item "lujiazui"
 \&\s-1ZHAOXIN\s0 lujiazui \s-1CPU\s0 with x86\-64, \s-1MOVBE, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1,
-SSE4.2, AVX, POPCNT, AES, PCLMUL, RDRND, XSAVE, XSAVEOPT, FSGSBASE, CX16,
-ABM, BMI, BMI2, F16C, FXSR, RDSEED\s0 instruction set support.
+SSE4.2, POPCNT, AES, PCLMUL, RDRND, XSAVE, XSAVEOPT, FSGSBASE, CX16,
+ABM, BMI, BMI2, FXSR, RDSEED\s0 instruction set support.  While the CPUs
+do support \s-1AVX\s0 and F16C, these aren't enabled by \f(CW\*(C`\-march=lujiazui\*(C'\fR
+for performance reasons.
 .IP "\fByongfeng\fR" 4
 .IX Item "yongfeng"
 \&\s-1ZHAOXIN\s0 yongfeng \s-1CPU\s0 with x86\-64, \s-1MOVBE, MMX, SSE, SSE2, SSE3, SSSE3, SSE4.1,
@@ -35256,13 +35258,14 @@ enabled by default on those targets.
 .IP "\fB\-mcrtdll=\fR\fIlibrary\fR" 4
 .IX Item "-mcrtdll=library"
 Preprocess, compile or link with specified C RunTime \s-1DLL\s0 \fIlibrary\fR.
-This option adjust predefined macros \f(CW\*(C`_\|_CRTDLL_\|_\*(C'\fR, \f(CW\*(C`_\|_MSVCRT_\|_\*(C'\fR
-and \f(CW\*(C`_\|_MSVCRT_VERSION_\|_\*(C'\fR for specified \s-1CRT\s0 \fIlibrary\fR, choose
-start file for \s-1CRT\s0 \fIlibrary\fR and link with \s-1CRT\s0 \fIlibrary\fR.
+This option adjust predefined macros \f(CW\*(C`_\|_CRTDLL_\|_\*(C'\fR, \f(CW\*(C`_\|_MSVCRT_\|_\*(C'\fR,
+\&\f(CW\*(C`_UCRT\*(C'\fR and \f(CW\*(C`_\|_MSVCRT_VERSION_\|_\*(C'\fR for specified \s-1CRT\s0 \fIlibrary\fR,
+choose start file for \s-1CRT\s0 \fIlibrary\fR and link with \s-1CRT\s0 \fIlibrary\fR.
 Recognized \s-1CRT\s0 library names for proprocessor are:
-\&\f(CW\*(C`crtdll\*(C'\fR, \f(CW\*(C`msvcrt10\*(C'\fR, \f(CW\*(C`msvcrt20\*(C'\fR, \f(CW\*(C`msvcrt40\*(C'\fR,
-\&\f(CW\*(C`msvcrt\-os\*(C'\fR, \f(CW\*(C`msvcr70\*(C'\fR, \f(CW\*(C`msvcr80\*(C'\fR, \f(CW\*(C`msvcr90\*(C'\fR,
-\&\f(CW\*(C`msvcr100\*(C'\fR, \f(CW\*(C`msvcr110\*(C'\fR, \f(CW\*(C`msvcr120\*(C'\fR and \f(CW\*(C`ucrt\*(C'\fR.
+\&\f(CW\*(C`crtdll*\*(C'\fR, \f(CW\*(C`msvcrt10*\*(C'\fR, \f(CW\*(C`msvcrt20*\*(C'\fR, \f(CW\*(C`msvcrt40*\*(C'\fR,
+\&\f(CW\*(C`msvcr40*\*(C'\fR, \f(CW\*(C`msvcrtd*\*(C'\fR, \f(CW\*(C`msvcrt\-os*\*(C'\fR,
+\&\f(CW\*(C`msvcr70*\*(C'\fR, \f(CW\*(C`msvcr71*\*(C'\fR, \f(CW\*(C`msvcr80*\*(C'\fR, \f(CW\*(C`msvcr90*\*(C'\fR,
+\&\f(CW\*(C`msvcr100*\*(C'\fR, \f(CW\*(C`msvcr110*\*(C'\fR, \f(CW\*(C`msvcr120*\*(C'\fR and \f(CW\*(C`ucrt*\*(C'\fR.
 If this options is not specified then the default MinGW import library
 \&\f(CW\*(C`msvcrt\*(C'\fR is used for linking and no other adjustment for
 preprocessor is done. MinGW import library \f(CW\*(C`msvcrt\*(C'\fR is just a
