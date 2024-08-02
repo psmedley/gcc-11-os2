@@ -2935,7 +2935,9 @@ eliminate_regs (rtx x, machine_mode mem_mode, rtx insn)
 {
   if (reg_eliminate == NULL)
     {
+#ifndef __OS2__ // FIXME
       gcc_assert (targetm.no_register_allocation);
+#endif
       return x;
     }
   return eliminate_regs_1 (x, mem_mode, insn, false, false);
