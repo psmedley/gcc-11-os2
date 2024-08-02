@@ -60,10 +60,10 @@
 # ifdef CTORS_SECTION_ASM_OP
 #  define TARGET_ASM_CONSTRUCTOR default_ctor_section_asm_out_constructor
 # else
-#  if defined(__OS2__)
-#   define TARGET_ASM_CONSTRUCTOR default_stabs_asm_out_constructor
-#  elif defined(TARGET_ASM_NAMED_SECTION)
+#  ifdef TARGET_ASM_NAMED_SECTION
 #   define TARGET_ASM_CONSTRUCTOR default_named_section_asm_out_constructor
+#  elif __OS2__
+#   define TARGET_ASM_CONSTRUCTOR default_stabs_asm_out_constructor
 #  else
 #   define TARGET_ASM_CONSTRUCTOR default_asm_out_constructor
 #  endif
@@ -74,10 +74,10 @@
 # ifdef DTORS_SECTION_ASM_OP
 #  define TARGET_ASM_DESTRUCTOR default_dtor_section_asm_out_destructor
 # else
-#  if defined(__OS2__)
-#   define TARGET_ASM_DESTRUCTOR default_stabs_asm_out_destructor
-#  elif defined(TARGET_ASM_NAMED_SECTION)
+#  ifdef TARGET_ASM_NAMED_SECTION
 #   define TARGET_ASM_DESTRUCTOR default_named_section_asm_out_destructor
+#  elif __OS2__
+#   define TARGET_ASM_DESTRUCTOR default_stabs_asm_out_destructor
 #  else
 #   define TARGET_ASM_DESTRUCTOR default_asm_out_destructor
 #  endif
