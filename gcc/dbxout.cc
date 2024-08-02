@@ -2397,6 +2397,11 @@ dbxout_type (tree type, int full)
       dbxout_type (TREE_TYPE (type), 0);
       break;
 
+    case BITINT_TYPE:
+      /* C23 _BitInt(N).  */
+      /* stub for now to avoid crash */
+      break;
+
     default:
       /* A C++ function with deduced return type can have a TEMPLATE_TYPE_PARM
 	 named 'auto' in its type.
