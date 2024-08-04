@@ -484,8 +484,6 @@ do {                                                                    \
 #undef GOMP_SELF_SPECS
 #define GOMP_SELF_SPECS ""
 
-/* Switch into a generic section.  */
-#define TARGET_ASM_NAMED_SECTION  i386_emx_asm_named_section
 
 #if 0
 /* Prefer symbols in %L (-lc) over %G (libcAB.dll includes gcc3XY.dll).
@@ -646,8 +644,3 @@ extern void __ctordtorTerm (void);
 
 #endif
 
-/* Function protypes for gcc/i386/emx.c */
-
-void
-i386_emx_asm_named_section(const char *name, unsigned int flags,
-			     tree decl);
