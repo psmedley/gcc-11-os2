@@ -5401,7 +5401,27 @@ process_command (unsigned int decoded_options_count,
       const char *obase;
       char *tofree = NULL;
       if (!output_file || not_actual_file_p (output_file))
+#ifndef __OS2__
 	obase = "a";
+#else
+	{
+	  for (int i = 0; i < n_infiles; i++)
+	    {
+	      if (infiles[i].language
+		  && (infiles[i].language[0] == '*'
+		      || (flag_wpa
+			  && strcmp (infiles[i].language, "lto") == 0)))
+		continue;
+
+	      tofree = xstrdup (lbasename (infiles[i].name));
+	      obase = tofree;
+
+	      if ((temp1 = strrchr (obase + 1, '.')))
+		*temp1 = '\0';
+	      break;
+	    }
+	}
+#endif
       else
 	{
 	  obase = lbasename (output_file);
