@@ -1,5 +1,5 @@
 /* LoongArch-specific code for C family languages.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
 This file is part of GCC.
@@ -116,7 +116,7 @@ loongarch_cpu_cpp_builtins (cpp_reader *pfile)
 
 	max_v_major = major > max_v_major ? major : max_v_major;
 	max_v_minor = major == max_v_major
-	  ? (minor > max_v_minor ? minor : max_v_minor): max_v_minor;
+	  ? (minor > max_v_minor ? minor : max_v_minor) : max_v_minor;
       }
 
   /* Find the minimum ISA version required to run the target program.  */

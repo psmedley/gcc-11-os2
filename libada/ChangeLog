@@ -1,11 +1,3 @@
-2024-08-01  Release Manager
-
-	* GCC 14.2.0 released.
-
-2024-05-07  Release Manager
-
-	* GCC 14.1.0 released.
-
 2023-08-07  John Ericson  <git@JohnEricson.me>
 
 	* configure: Regenerate.
@@ -470,7 +462,7 @@
 
 	* New directory, new ChangeLog.
 
-Copyright (C) 2003-2024 Free Software Foundation, Inc.
+Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
 This ChangeLog is free software; the Free Software Foundation gives
 unlimited permission to copy, distribute, and modify it.

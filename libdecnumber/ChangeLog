@@ -1,11 +1,3 @@
-2024-08-01  Release Manager
-
-	* GCC 14.2.0 released.
-
-2024-05-07  Release Manager
-
-	* GCC 14.1.0 released.
-
 2024-04-02  Jakub Jelinek  <jakub@redhat.com>
 
 	* decCommon.c (decFinalize): Fix duplicated words in
@@ -796,7 +788,7 @@
 	* decDPD.h: Likewise.
 	* decLibrary.c, decRound.c: Likewise.
 
-Copyright (C) 2005-2024 Free Software Foundation, Inc.
+Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

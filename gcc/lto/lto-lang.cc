@@ -1,5 +1,5 @@
 /* Language-dependent hooks for LTO.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -262,6 +262,7 @@ int flag_isoc94;
 int flag_isoc99;
 int flag_isoc11;
 int flag_isoc23;
+int flag_isoc2y;
 
 /* Attribute handlers.  */
 
@@ -502,7 +503,7 @@ handle_type_generic_attribute (tree *node, tree ARG_UNUSED (name),
 {
   /* Ensure we have a function type.  */
   gcc_assert (TREE_CODE (*node) == FUNCTION_TYPE);
-  
+
   /* Ensure we have a variadic function.  */
   gcc_assert (!prototype_p (*node) || stdarg_p (*node));
 

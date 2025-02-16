@@ -1,5 +1,5 @@
 ;; Machine description for optimization of RVV auto-vectorization.
-;; Copyright (C) 2023-2024 Free Software Foundation, Inc.
+;; Copyright (C) 2023-2025 Free Software Foundation, Inc.
 ;; Contributed by Juzhe Zhong (juzhe.zhong@rivai.ai), RiVAI Technologies Ltd.
 
 ;; This file is part of GCC.
@@ -810,7 +810,8 @@
   "&& 1"
   [(const_int 0)]
 {
-  riscv_vector::expand_reduction (<WREDUC_UNSPEC>, riscv_vector::REDUCE_OP,
+  riscv_vector::expand_reduction (<WREDUC_UNSPEC>, <WREDUC_UNSPEC_VL0_SAFE>,
+				  riscv_vector::REDUCE_OP,
                                   operands,
                                   CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
   DONE;
@@ -830,6 +831,7 @@
   [(const_int 0)]
 {
   riscv_vector::expand_reduction (UNSPEC_WREDUC_SUM_UNORDERED,
+				  UNSPEC_WREDUC_SUM_UNORDERED_VL0_SAFE,
                                   riscv_vector::REDUCE_OP_FRM_DYN,
                                   operands,
                                   CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
@@ -851,6 +853,7 @@
   [(const_int 0)]
 {
   riscv_vector::expand_reduction (UNSPEC_WREDUC_SUM_ORDERED,
+				  UNSPEC_WREDUC_SUM_ORDERED_VL0_SAFE,
                                   riscv_vector::REDUCE_OP_FRM_DYN,
                                   operands, operands[2]);
   DONE;
@@ -879,6 +882,7 @@
     {
       rtx ops[] = {operands[0], operands[2], operands[3], operands[4]};
       riscv_vector::expand_reduction (UNSPEC_WREDUC_SUM_ORDERED,
+				      UNSPEC_WREDUC_SUM_ORDERED_VL0_SAFE,
                                       riscv_vector::REDUCE_OP_M_FRM_DYN,
                                       ops, operands[1]);
     }
@@ -1227,6 +1231,7 @@
   rtx ops[] = {operands[0], operands[2], operands[1],
                gen_int_mode (GET_MODE_NUNITS (<MODE>mode), Pmode)};
   riscv_vector::expand_reduction (<WREDUC_UNSPEC>,
+				  <WREDUC_UNSPEC_VL0_SAFE>,
                                   riscv_vector::REDUCE_OP_M,
                                   ops, CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
   DONE;
@@ -1282,6 +1287,7 @@
 {
   rtx ops[] = {operands[0], operands[3], operands[1], operands[2]};
   riscv_vector::expand_reduction (<WREDUC_UNSPEC>,
+				  <WREDUC_UNSPEC_VL0_SAFE>,
                                   riscv_vector::REDUCE_OP_M,
                                   ops, CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
   DONE;
@@ -1318,6 +1324,7 @@
   rtx ops[] = {operands[0], operands[2], operands[1],
                gen_int_mode (GET_MODE_NUNITS (<MODE>mode), Pmode)};
   riscv_vector::expand_reduction (UNSPEC_WREDUC_SUM_UNORDERED,
+				  UNSPEC_WREDUC_SUM_UNORDERED_VL0_SAFE,
                                   riscv_vector::REDUCE_OP_M_FRM_DYN,
                                   ops, CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
   DONE;
@@ -1373,6 +1380,7 @@
 {
   rtx ops[] = {operands[0], operands[3], operands[1], operands[2]};
   riscv_vector::expand_reduction (UNSPEC_WREDUC_SUM_UNORDERED,
+				  UNSPEC_WREDUC_SUM_UNORDERED_VL0_SAFE,
                                   riscv_vector::REDUCE_OP_M_FRM_DYN,
                                   ops, CONST0_RTX (<V_DOUBLE_EXTEND_VEL>mode));
   DONE;
@@ -1436,3 +1444,178 @@
     DONE;
   }
   [(set_attr "type" "vmalu")])
+
+;; Optimization pattern for early break auto-vectorization
+;; vcond_mask_len (mask, ones, zeros, len, bias) + vlmax popcount
+;; -> non vlmax popcount (mask, len)
+(define_insn_and_split "*vcond_mask_len_popcount_<VB_VLS:mode><P:mode>"
+  [(set (match_operand:P 0 "register_operand")
+    (popcount:P
+     (unspec:VB_VLS [
+      (unspec:VB_VLS [
+       (match_operand:VB_VLS 1 "register_operand")
+       (match_operand:VB_VLS 2 "const_1_operand")
+       (match_operand:VB_VLS 3 "const_0_operand")
+       (match_operand 4 "autovec_length_operand")
+       (match_operand 5 "const_0_operand")] UNSPEC_SELECT_MASK)
+      (match_operand 6 "autovec_length_operand")
+      (const_int 1)
+      (reg:SI VL_REGNUM)
+      (reg:SI VTYPE_REGNUM)] UNSPEC_VPREDICATE)))]
+  "TARGET_VECTOR
+   && can_create_pseudo_p ()
+   && riscv_vector::get_vector_mode (Pmode, GET_MODE_NUNITS (<VB_VLS:MODE>mode)).exists ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    riscv_vector::emit_nonvlmax_insn (
+	code_for_pred_popcount (<VB_VLS:MODE>mode, Pmode),
+	riscv_vector::CPOP_OP,
+	operands, operands[4]);
+    DONE;
+  }
+  [(set_attr "type" "vector")])
+
+;; vzext.vf2 + vsll = vwsll.
+(define_insn_and_split "*vwsll_zext1_<mode>"
+  [(set (match_operand:VWEXTI 0		    "register_operand"	   "=vr ")
+      (ashift:VWEXTI
+	(zero_extend:VWEXTI
+	  (match_operand:<V_DOUBLE_TRUNC> 1 "register_operand"	   " vr "))
+	  (match_operand:<V_DOUBLE_TRUNC> 2 "vector_shift_operand" "vrvk")))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    insn_code icode = code_for_pred_vwsll (<MODE>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+(define_insn_and_split "*vwsll_zext2_<mode>"
+  [(set (match_operand:VWEXTI 0		    "register_operand"	   "=vr ")
+      (ashift:VWEXTI
+	(zero_extend:VWEXTI
+	  (match_operand:<V_DOUBLE_TRUNC> 1 "register_operand"	   " vr "))
+	(zero_extend:VWEXTI
+	  (match_operand:<V_DOUBLE_TRUNC> 2 "vector_shift_operand" "vrvk"))))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    insn_code icode = code_for_pred_vwsll (<MODE>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+
+(define_insn_and_split "*vwsll_zext1_scalar_<mode>"
+  [(set (match_operand:VWEXTI 0		    "register_operand"		  "=vr")
+      (ashift:VWEXTI
+	(zero_extend:VWEXTI
+	  (match_operand:<V_DOUBLE_TRUNC> 1 "register_operand"		  " vr"))
+	  (match_operand:<VEL>		  2 "vector_scalar_shift_operand" " rK")))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+    insn_code icode = code_for_pred_vwsll_scalar (<MODE>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+;; For
+;;   uint16_t dst;
+;;   uint8_t a, b;
+;;   dst = vwsll (a, b)
+;; we seem to create
+;;   aa = (int) a;
+;;   bb = (int) b;
+;;   dst = (short) vwsll (aa, bb);
+;; The following patterns help to combine this idiom into one vwsll.
+
+(define_insn_and_split "*vwsll_zext1_trunc_<mode>"
+  [(set (match_operand:<V_DOUBLE_TRUNC> 0   "register_operand"	   "=vr ")
+    (truncate:<V_DOUBLE_TRUNC>
+      (ashift:VQEXTI
+	(zero_extend:VQEXTI
+	  (match_operand:<V_QUAD_TRUNC> 1   "register_operand"	   " vr "))
+	(match_operand:VQEXTI		2   "vector_shift_operand" "vrvk"))))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    rtx truncated = gen_reg_rtx (<V_QUAD_TRUNC>mode);
+    emit_insn (gen_trunc<mode><v_quad_trunc>2 (truncated, operands[2]));
+    operands[2] = truncated;
+
+    insn_code icode = code_for_pred_vwsll (<V_DOUBLE_TRUNC>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+(define_insn_and_split "*vwsll_zext2_trunc_<mode>"
+  [(set (match_operand:<V_DOUBLE_TRUNC> 0   "register_operand"	   "=vr ")
+    (truncate:<V_DOUBLE_TRUNC>
+      (ashift:VQEXTI
+	(zero_extend:VQEXTI
+	  (match_operand:<V_QUAD_TRUNC> 1   "register_operand"	   " vr "))
+	(zero_extend:VQEXTI
+	  (match_operand:<V_QUAD_TRUNC>	2   "vector_shift_operand" "vrvk")))))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    insn_code icode = code_for_pred_vwsll (<V_DOUBLE_TRUNC>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+(define_insn_and_split "*vwsll_zext1_trunc_scalar_<mode>"
+  [(set (match_operand:<V_DOUBLE_TRUNC> 0   "register_operand"		  "=vr ")
+    (truncate:<V_DOUBLE_TRUNC>
+      (ashift:VQEXTI
+	(zero_extend:VQEXTI
+	  (match_operand:<V_QUAD_TRUNC> 1   "register_operand"		  " vr "))
+	  (match_operand:<VEL>		2   "vector_scalar_shift_operand" " rK"))))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    operands[2] = gen_lowpart (Pmode, operands[2]);
+    insn_code icode = code_for_pred_vwsll_scalar (<V_DOUBLE_TRUNC>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vwsll")])
+
+;; vnot + vand = vandn.
+(define_insn_and_split "*vandn_<mode>"
+ [(set (match_operand:V_VLSI 0 "register_operand" "=vr")
+   (and:V_VLSI
+    (not:V_VLSI
+      (match_operand:V_VLSI  2 "register_operand"  "vr"))
+    (match_operand:V_VLSI    1 "register_operand"  "vr")))]
+  "TARGET_ZVBB && can_create_pseudo_p ()"
+  "#"
+  "&& 1"
+  [(const_int 0)]
+  {
+    insn_code icode = code_for_pred_vandn (<MODE>mode);
+    riscv_vector::emit_vlmax_insn (icode, riscv_vector::BINARY_OP, operands);
+    DONE;
+  }
+  [(set_attr "type" "vandn")])

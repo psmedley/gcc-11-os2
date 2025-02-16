@@ -6,7 +6,7 @@
 ; if you change "loongarch.opt.in", "loongarch-strings", or
 ; "isa-evolution.in".
 ;
-; Copyright (C) 2021-2024 Free Software Foundation, Inc.
+; Copyright (C) 2021-2025 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -309,6 +309,10 @@ default value is 4.
 ; CPUCFG independently, so we use bit flags to specify them.
 TargetVariable
 HOST_WIDE_INT la_isa_evolution = 0
+
+mannotate-tablejump
+Target Mask(ANNOTATE_TABLEJUMP) Save
+Annotate table jump instruction (jr {reg}) to correlate it with the jump table.
 
 mfrecipe
 Target Mask(ISA_FRECIPE) Var(la_isa_evolution)

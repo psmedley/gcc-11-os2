@@ -1,5 +1,5 @@
 /* Classes for saving, deduplicating, and emitting analyzer diagnostics.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -19,7 +19,7 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
-#define INCLUDE_MEMORY
+#define INCLUDE_VECTOR
 #include "system.h"
 #include "coretypes.h"
 #include "tree.h"
@@ -739,23 +739,23 @@ saved_diagnostic::add_event (std::unique_ptr<checker_event> event)
     "pending_diagnostic": str,
     "idx": int}.  */
 
-json::object *
+std::unique_ptr<json::object>
 saved_diagnostic::to_json () const
 {
-  json::object *sd_obj = new json::object ();
+  auto sd_obj = ::make_unique<json::object> ();
 
   if (m_sm)
-    sd_obj->set ("sm", new json::string (m_sm->get_name ()));
-  sd_obj->set ("enode", new json::integer_number (m_enode->m_index));
-  sd_obj->set ("snode", new json::integer_number (m_snode->m_index));
+    sd_obj->set_string ("sm", m_sm->get_name ());
+  sd_obj->set_integer ("enode", m_enode->m_index);
+  sd_obj->set_integer ("snode", m_snode->m_index);
   if (m_sval)
     sd_obj->set ("sval", m_sval->to_json ());
   if (m_state)
     sd_obj->set ("state", m_state->to_json ());
   if (m_best_epath)
-    sd_obj->set ("path_length", new json::integer_number (get_epath_length ()));
-  sd_obj->set ("pending_diagnostic", new json::string (m_d->get_kind ()));
-  sd_obj->set ("idx", new json::integer_number (m_idx));
+    sd_obj->set_integer ("path_length", get_epath_length ());
+  sd_obj->set_string ("pending_diagnostic", m_d->get_kind ());
+  sd_obj->set_integer ("idx", m_idx);
 
   /* We're not yet JSONifying the following fields:
      const gimple *m_stmt;
@@ -1037,7 +1037,7 @@ saved_diagnostic::maybe_add_sarif_properties (sarif_object &result_obj) const
   if (m_state)
     props.set (PROPERTY_PREFIX "state", m_state->to_json ());
   if (m_best_epath)
-  props.set (PROPERTY_PREFIX "idx", new json::integer_number (m_idx));
+  props.set_integer (PROPERTY_PREFIX "idx", m_idx);
 #undef PROPERTY_PREFIX
 
   /* Potentially add pending_diagnostic-specific properties.  */
@@ -1215,18 +1215,18 @@ diagnostic_manager::add_event (std::unique_ptr<checker_event> event)
 /* Return a new json::object of the form
    {"diagnostics"  : [obj for saved_diagnostic]}.  */
 
-json::object *
+std::unique_ptr<json::object>
 diagnostic_manager::to_json () const
 {
-  json::object *dm_obj = new json::object ();
+  auto dm_obj = ::make_unique<json::object> ();
 
   {
-    json::array *sd_arr = new json::array ();
+    auto sd_arr = ::make_unique<json::array> ();
     int i;
     saved_diagnostic *sd;
     FOR_EACH_VEC_ELT (m_saved_diagnostics, i, sd)
       sd_arr->append (sd->to_json ());
-    dm_obj->set ("diagnostics", sd_arr);
+    dm_obj->set ("diagnostics", std::move (sd_arr));
   }
 
   return dm_obj;
@@ -1560,8 +1560,6 @@ diagnostic_manager::emit_saved_diagnostic (const exploded_graph &eg,
        sd.get_index (), sd.m_d->get_kind (), sd.m_snode->m_index);
   log ("num dupes: %i", sd.get_num_dupes ());
 
-  pretty_printer *pp = global_dc->printer->clone ();
-
   const exploded_path *epath = sd.get_best_epath ();
   gcc_assert (epath);
 
@@ -1587,8 +1585,17 @@ diagnostic_manager::emit_saved_diagnostic (const exploded_graph &eg,
      We use the final enode from the epath, which might be different from
      the sd.m_enode, as the dedupe code doesn't care about enodes, just
      snodes.  */
-  sd.m_d->add_final_event (sd.m_sm, epath->get_final_enode (), sd.m_stmt,
-			   sd.m_var, sd.m_state, &emission_path);
+  {
+    const exploded_node *const enode = epath->get_final_enode ();
+    const gimple *stmt = sd.m_stmt;
+    event_loc_info loc_info (get_stmt_location (stmt, enode->get_function ()),
+			     enode->get_function ()->decl,
+			     enode->get_stack_depth ());
+    if (sd.m_stmt_finder)
+      sd.m_stmt_finder->update_event_loc_info (loc_info);
+    sd.m_d->add_final_event (sd.m_sm, enode, loc_info,
+			     sd.m_var, sd.m_state, &emission_path);
+  }
 
   /* The "final" event might not be final; if the saved_diagnostic has a
      trailing eedge stashed, add any events for it.  This is for use
@@ -1635,7 +1642,6 @@ diagnostic_manager::emit_saved_diagnostic (const exploded_graph &eg,
 	  free (filename);
 	}
     }
-  delete pp;
 }
 
 /* Emit a "path" of events to EMISSION_PATH describing the exploded path
@@ -2229,7 +2235,7 @@ diagnostic_manager::add_events_for_eedge (const path_builder &pb,
 							    &iter_point,
 							    emission_path,
 							    pb.get_ext_state ());
-			sm.on_stmt (&sm_ctxt, dst_point.get_supernode (), stmt);
+			sm.on_stmt (sm_ctxt, dst_point.get_supernode (), stmt);
 			// TODO: what about phi nodes?
 		      }
 		  }
@@ -2826,7 +2832,8 @@ diagnostic_manager::prune_interproc_events (checker_path *path) const
 	      if (get_logger ())
 		{
 		  label_text desc
-		    (path->get_checker_event (idx)->get_desc (false));
+		    (path->get_checker_event (idx)->get_desc
+		       (*global_dc->get_reference_printer ()));
 		  log ("filtering events %i-%i:"
 		       " irrelevant call/entry/return: %s",
 		       idx, idx + 2, desc.get ());
@@ -2848,7 +2855,8 @@ diagnostic_manager::prune_interproc_events (checker_path *path) const
 	      if (get_logger ())
 		{
 		  label_text desc
-		    (path->get_checker_event (idx)->get_desc (false));
+		    (path->get_checker_event (idx)->get_desc
+		     (*global_dc->get_reference_printer ()));
 		  log ("filtering events %i-%i:"
 		       " irrelevant call/return: %s",
 		       idx, idx + 1, desc.get ());
@@ -2945,7 +2953,8 @@ diagnostic_manager::prune_system_headers (checker_path *path) const
 	      {
 		if (get_logger ())
 		  {
-		    label_text desc (event->get_desc (false));
+		    label_text desc
+		      (event->get_desc (*global_dc->get_reference_printer ()));
 		    log ("filtering event %i:"
 			 "system header entry event: %s",
 			 idx, desc.get ());

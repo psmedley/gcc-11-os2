@@ -1,5 +1,5 @@
 /* Compiler driver program that can handle many languages.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -40,6 +40,8 @@ compilation is specified by a string called a "spec".  */
 #include "opt-suggestions.h"
 #include "gcc.h"
 #include "diagnostic.h"
+#include "diagnostic-format.h"
+#include "pretty-print-urlifier.h"
 #include "flags.h"
 #include "opts.h"
 #include "filenames.h"
@@ -47,6 +49,7 @@ compilation is specified by a string called a "spec".  */
 #include "opts-jobserver.h"
 #include "common/common-target.h"
 #include "gcc-urlifier.h"
+#include "opts-diagnostic.h"
 
 #ifndef MATH_LIBRARY
 #define MATH_LIBRARY "m"
@@ -414,7 +417,7 @@ static int do_spec_2 (const char *, const char *);
 static void do_option_spec (const char *, const char *);
 static void do_self_spec (const char *);
 static const char *find_file (const char *);
-static int is_directory (const char *, bool);
+static int is_directory (const char *);
 static const char *validate_switches (const char *, bool, bool);
 static void validate_all_switches (void);
 static inline void validate_switches_from_spec (const char *, bool);
@@ -1276,7 +1279,7 @@ static const char *cpp_unique_options =
  %{remap} %{%:debug-level-gt(2):-dD}\
  %{!iplugindir*:%{fplugin*:%:find-plugindir()}}\
  %{H} %C %{D*&U*&A*} %{i*} %Z %i\
- %{E|M|MM:%W{o*}}\
+ %{E|M|MM:%W{o*}} %{-embed*}\
  %{fdeps-format=*:%{!fdeps-file=*:-fdeps-file=%:join(%{!o:%b.ddi}%{o*:%.ddi%*})}}\
  %{fdeps-format=*:%{!fdeps-target=*:-fdeps-target=%:join(%{!o:%b.o}%{o*:%.o%*})}}";
 
@@ -2166,6 +2169,10 @@ static int have_E = 0;
 /* Pointer to output file name passed in with -o. */
 static const char *output_file = 0;
 
+/* Pointer to input file name passed in with -truncate.
+   This file should be truncated after linking. */
+static const char *totruncate_file = 0;
+
 /* This is the list of suffixes and codes (%g/%u/%U/%j) and the associated
    temp file.  If the HOST_BIT_BUCKET is used for %j, no entry is made for
    it here.  */
@@ -2964,7 +2971,7 @@ add_to_obstack (char *path, void *data)
 {
   struct add_to_obstack_info *info = (struct add_to_obstack_info *) data;
 
-  if (info->check_dir && !is_directory (path, false))
+  if (info->check_dir && !is_directory (path))
     return NULL;
 
   if (!info->first_time)
@@ -4374,15 +4381,29 @@ driver_handle_option (struct gcc_options *opts,
       diagnostic_urls_init (dc, value);
       break;
 
+    case OPT_fdiagnostics_show_highlight_colors:
+      dc->set_show_highlight_colors (value);
+      break;
+
     case OPT_fdiagnostics_format_:
 	{
 	  const char *basename = (opts->x_dump_base_name ? opts->x_dump_base_name
 				  : opts->x_main_input_basename);
-	  diagnostic_output_format_init (dc, basename,
+	  gcc_assert (dc);
+	  diagnostic_output_format_init (*dc,
+					 opts->x_main_input_filename, basename,
 					 (enum diagnostics_output_format)value,
 					 opts->x_flag_diagnostics_json_formatting);
 	  break;
 	}
+
+    case OPT_fdiagnostics_add_output_:
+      handle_OPT_fdiagnostics_add_output_ (*opts, *dc, arg, loc);
+      break;
+
+    case OPT_fdiagnostics_set_output_:
+      handle_OPT_fdiagnostics_set_output_ (*opts, *dc, arg, loc);
+      break;
 
     case OPT_fdiagnostics_text_art_charset_:
       dc->set_text_art_charset ((enum diagnostic_text_art_charset)value);
@@ -4566,6 +4587,11 @@ driver_handle_option (struct gcc_options *opts,
       do_save = false;
       break;
 
+    case OPT_truncate:
+      totruncate_file = arg;
+      do_save = false;
+      break;
+
     case OPT____:
       /* "-###"
 	 This is similar to -v except that there is no execution
@@ -4589,7 +4615,7 @@ driver_handle_option (struct gcc_options *opts,
 	   if appending a directory separator actually makes a
 	   valid directory name.  */
 	if (!IS_DIR_SEPARATOR (arg[len - 1])
-	    && is_directory (arg, false))
+	    && is_directory (arg))
 	  {
 	    char *tmp = XNEWVEC (char, len + 2);
 	    strcpy (tmp, arg);
@@ -6054,7 +6080,7 @@ spec_path (char *path, void *data)
       memcpy (path + len, info->append, info->append_len + 1);
     }
 
-  if (!is_directory (path, true))
+  if (!is_directory (path))
     return NULL;
 
   do_spec_1 (info->option, 1, NULL);
@@ -6926,7 +6952,7 @@ do_spec_1 (const char *spec, int inswitch, const char *soft_matched_part)
 		     "%{foo=*:bar%*}%{foo=*:one%*two}"
 
 		   matches -foo=hello then it will produce:
-		   
+
 		     barhello onehellotwo
 		*/
 		if (*p == 0 || *p == '}')
@@ -8078,11 +8104,10 @@ find_file (const char *name)
   return newname ? newname : name;
 }
 
-/* Determine whether a directory exists.  If LINKER, return 0 for
-   certain fixed names not needed by the linker.  */
+/* Determine whether a directory exists.  */
 
 static int
-is_directory (const char *path1, bool linker)
+is_directory (const char *path1)
 {
   int len1;
   char *path;
@@ -8099,17 +8124,6 @@ is_directory (const char *path1, bool linker)
     *cp++ = DIR_SEPARATOR;
   *cp++ = '.';
   *cp = '\0';
-
-  /* Exclude directories that the linker is known to search.  */
-  if (linker
-      && IS_DIR_SEPARATOR (path[0])
-      && ((cp - path == 6
-	   && filename_ncmp (path + 1, "lib", 3) == 0)
-	  || (cp - path == 10
-	      && filename_ncmp (path + 1, "usr", 3) == 0
-	      && IS_DIR_SEPARATOR (path[4])
-	      && filename_ncmp (path + 5, "lib", 3) == 0)))
-    return 0;
 
   return (stat (path, &st) >= 0 && S_ISDIR (st.st_mode));
 }
@@ -8965,7 +8979,7 @@ driver::maybe_print_and_exit () const
     {
       printf (_("%s %s%s\n"), progname, pkgversion_string,
 	      version_string);
-      printf ("Copyright %s 2024 Free Software Foundation, Inc.\n",
+      printf ("Copyright %s 2025 Free Software Foundation, Inc.\n",
 	      _("(C)"));
       fputs (_("This is free software; see the source for copying conditions.  There is NO\n\
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n"),
@@ -9349,6 +9363,11 @@ driver::final_actions () const
   if (seen_error ())
     delete_failure_queue ();
   delete_temp_files ();
+
+  if (totruncate_file != NULL && !seen_error ())
+    /* Truncate file specified by -truncate.
+       Used by lto-wrapper to reduce temporary disk-space usage. */
+    truncate(totruncate_file, 0);
 
   if (print_help_list)
     {
@@ -10724,9 +10743,9 @@ static unsigned HOST_WIDE_INT
 get_random_number (void)
 {
   unsigned HOST_WIDE_INT ret = 0;
-  int fd; 
+  int fd;
 
-  fd = open ("/dev/urandom", O_RDONLY); 
+  fd = open ("/dev/urandom", O_RDONLY);
   if (fd >= 0)
     {
       read (fd, &ret, sizeof (HOST_WIDE_INT));
@@ -11178,16 +11197,16 @@ whitespace_to_convert_p (char c, void *)
   return (c == ' ' || c == '\t');
 }
 
-/* Insert backslash before spaces in ORIG (usually a file path), to 
+/* Insert backslash before spaces in ORIG (usually a file path), to
    avoid being broken by spec parser.
 
    This function is needed as do_spec_1 treats white space (' ' and '\t')
    as the end of an argument. But in case of -plugin /usr/gcc install/xxx.so,
    the file name should be treated as a single argument rather than being
-   broken into multiple. Solution is to insert '\\' before the space in a 
+   broken into multiple. Solution is to insert '\\' before the space in a
    file name.
-   
-   This function converts and only converts all occurrence of ' ' 
+
+   This function converts and only converts all occurrence of ' '
    to '\\' + ' ' and '\t' to '\\' + '\t'.  For example:
    "a b"  -> "a\\ b"
    "a  b" -> "a\\ \\ b"

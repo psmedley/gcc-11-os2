@@ -634,6 +634,18 @@
 #endif
 
 
+/* Define if the assembler understands -march=rv*_b. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_AS_MARCH_B
+#endif
+
+
+/* Define if the assembler understands -march=rv*_zaamo_zalrsc. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_AS_MARCH_ZAAMO_ZALRSC
+#endif
+
+
 /* Define if the assembler understands -march=rv*_zifencei. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_AS_MARCH_ZIFENCEI
@@ -679,12 +691,6 @@
 /* Define if the assembler understands -mnan=. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_AS_NAN
-#endif
-
-
-/* Define if your assembler supports %gotoff relocation syntax. */
-#ifndef USED_FOR_TARGET
-#undef HAVE_AS_NIOS2_GOTOFF_RELOCATION
 #endif
 
 
@@ -881,6 +887,12 @@
 #endif
 
 
+/* Define to 1 if you have the `clock_gettime' function. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_CLOCK_GETTIME
+#endif
+
+
 /* Define if <time.h> defines clock_t. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_CLOCK_T
@@ -1013,6 +1025,13 @@
    define to 0. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_DECL_FILENO_UNLOCKED
+#endif
+
+
+/* Define to 1 if we found a declaration for 'fmemopen', otherwise define to
+   0. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_DECL_FMEMOPEN
 #endif
 
 
@@ -1152,6 +1171,13 @@
    */
 #ifndef USED_FOR_TARGET
 #undef HAVE_DECL_MALLOC
+#endif
+
+
+/* Define to 1 if we found a declaration for 'mkstemps', otherwise define to
+   0. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_DECL_MKSTEMPS
 #endif
 
 
@@ -1435,6 +1461,12 @@
 #endif
 
 
+/* Define if your assembler supports .base64. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_GAS_BASE64
+#endif
+
+
 /* Define 0/1 if your assembler supports CFI directives. */
 #undef HAVE_GAS_CFI_DIRECTIVE
 
@@ -1443,6 +1475,12 @@
 
 /* Define 0/1 if your assembler supports .cfi_sections. */
 #undef HAVE_GAS_CFI_SECTIONS_DIRECTIVE
+
+/* Define if your assembler supports .cv_ucomp. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_GAS_CV_UCOMP
+#endif
+
 
 /* Define if your assembler supports the .loc discriminator sub-directive. */
 #ifndef USED_FOR_TARGET
@@ -1679,13 +1717,6 @@
 /* Define to 1 if you have the <ldfcn.h> header file. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_LDFCN_H
-#endif
-
-
-/* Define 0/1 if your linker supports the SHF_MERGE flag with section
-   alignment > 1. */
-#ifndef USED_FOR_TARGET
-#undef HAVE_LD_ALIGNED_SHF_MERGE
 #endif
 
 
@@ -1948,6 +1979,18 @@
 /* Define if read-only mmap of a plain file works. */
 #ifndef USED_FOR_TARGET
 #undef HAVE_MMAP_FILE
+#endif
+
+
+/* Define to 1 if you have the `msync' function. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_MSYNC
+#endif
+
+
+/* Define to 1 if you have the `munmap' function. */
+#ifndef USED_FOR_TARGET
+#undef HAVE_MUNMAP
 #endif
 
 
@@ -2567,12 +2610,6 @@
    DLL exports wrappers to support libstdc++ function replacement. */
 #ifndef USED_FOR_TARGET
 #undef USE_CYGWIN_LIBSTDCXX_WRAPPERS
-#endif
-
-
-/* Define 0/1 if your linker supports hidden thunks in linkonce sections. */
-#ifndef USED_FOR_TARGET
-#undef USE_HIDDEN_LINKONCE
 #endif
 
 
