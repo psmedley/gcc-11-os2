@@ -1985,6 +1985,17 @@ reregister_specialization (tree spec, tree tinfo, tree new_spec)
       gcc_assert (entry->spec == spec || entry->spec == new_spec);
       gcc_assert (new_spec != NULL_TREE);
       entry->spec = new_spec;
+
+      /* We need to also remove SPEC from DECL_TEMPLATE_INSTANTIATIONS
+	 if it was placed there.  */
+      for (tree *inst = &DECL_TEMPLATE_INSTANTIATIONS (elt.tmpl);
+	   *inst; inst = &TREE_CHAIN (*inst))
+	if (TREE_VALUE (*inst) == spec)
+	  {
+	    *inst = TREE_CHAIN (*inst);
+	    break;
+	  }
+
       return 1;
     }
 
@@ -19467,18 +19478,6 @@ tsubst_stmt (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	RECUR (OMP_FOR_PRE_BODY (t));
 	pre_body = pop_stmt_list (pre_body);
 
-	tree sl = NULL_TREE;
-	if (flag_range_for_ext_temps
-	    && OMP_FOR_INIT (t) != NULL_TREE
-	    && !processing_template_decl)
-	  for (i = 0; i < TREE_VEC_LENGTH (OMP_FOR_INIT (t)); i++)
-	    if (TREE_VEC_ELT (OMP_FOR_INIT (t), i)
-		&& TREE_VEC_ELT (OMP_FOR_COND (t), i) == global_namespace)
-	      {
-		sl = push_stmt_list ();
-		break;
-	      }
-
 	if (OMP_FOR_INIT (t) != NULL_TREE)
 	  for (i = 0; i < TREE_VEC_LENGTH (OMP_FOR_INIT (t)); i++)
 	    {
@@ -19532,16 +19531,6 @@ tsubst_stmt (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	    OMP_FOR_CLAUSES (t) = clauses;
 	    SET_EXPR_LOCATION (t, EXPR_LOCATION (t));
 	    add_stmt (t);
-	  }
-
-	if (sl)
-	  {
-	    /* P2718R0 - Add CLEANUP_POINT_EXPR so that temporaries in
-	       for-range-initializer whose lifetime is extended are destructed
-	       here.  */
-	    sl = pop_stmt_list (sl);
-	    sl = maybe_cleanup_point_expr_void (sl);
-	    add_stmt (sl);
 	  }
 
 	add_stmt (finish_omp_for_block (finish_omp_structured_block (stmt),
@@ -21723,8 +21712,8 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl)
 	  {
 	    r = finish_non_static_data_member (member, object, NULL_TREE,
 					       complain);
-	    if (TREE_CODE (r) == COMPONENT_REF)
-	      REF_PARENTHESIZED_P (r) = REF_PARENTHESIZED_P (t);
+	    if (REF_PARENTHESIZED_P (t))
+	      r = force_paren_expr (r);
 	    RETURN (r);
 	  }
 	else if (type_dependent_expression_p (object))

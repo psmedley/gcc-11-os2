@@ -2474,8 +2474,16 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
 					   sizeof(err),NULL, NULL))
 	{
 	  if (where)
-	    gfc_error_opt (0, "Interface mismatch in dummy procedure %qs at %L:"
-			   " %s", formal->name, &actual->where, err);
+	    {
+	      /* Artificially generated symbol names would only confuse.  */
+	      if (formal->attr.artificial)
+		gfc_error_opt (0, "Interface mismatch in dummy procedure "
+			       "at %L conflicts with %L: %s", &actual->where,
+			       &formal->declared_at, err);
+	      else
+		gfc_error_opt (0, "Interface mismatch in dummy procedure %qs "
+			       "at %L: %s", formal->name, &actual->where, err);
+	    }
 	  return false;
 	}
 
@@ -2483,8 +2491,16 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
 				   sizeof(err), NULL, NULL))
 	{
 	  if (where)
-	    gfc_error_opt (0, "Interface mismatch in dummy procedure %qs at %L:"
-			   " %s", formal->name, &actual->where, err);
+	    {
+	      if (formal->attr.artificial)
+		gfc_error_opt (0, "Interface mismatch in dummy procedure "
+			       "at %L conflichts with %L: %s", &actual->where,
+			       &formal->declared_at, err);
+	      else
+		gfc_error_opt (0, "Interface mismatch in dummy procedure %qs at "
+			       "%L: %s", formal->name, &actual->where, err);
+
+	    }
 	  return false;
 	}
 
@@ -2521,9 +2537,9 @@ compare_parameter (gfc_symbol *formal, gfc_expr *actual,
 		      gcc_assert (formal->attr.function);
 		      if (!gfc_compare_types (&global_asym->ts, &formal->ts))
 			{
-			  gfc_error ("Type mismatch passing global function %qs "
-				     "declared at %L at %L (%s/%s)",
-				     actual_name, &gsym->where, &actual->where,
+			  gfc_error ("Type mismatch at %L passing global "
+				     "function %qs declared at %L (%s/%s)",
+				     &actual->where, actual_name, &gsym->where,
 				     gfc_typename (&global_asym->ts),
 				     gfc_dummy_typename (&formal->ts));
 			  return false;
@@ -5822,7 +5838,14 @@ gfc_get_formal_from_actual_arglist (gfc_symbol *sym,
 	  gfc_get_symbol (name, gfc_current_ns, &s);
 	  if (a->expr->ts.type == BT_PROCEDURE)
 	    {
+	      gfc_symbol *asym = a->expr->symtree->n.sym;
 	      s->attr.flavor = FL_PROCEDURE;
+	      if (asym->attr.function)
+		{
+		  s->attr.function = 1;
+		  s->ts = asym->ts;
+		}
+	      s->attr.subroutine = asym->attr.subroutine;
 	    }
 	  else
 	    {
