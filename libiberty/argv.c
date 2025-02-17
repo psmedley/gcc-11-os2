@@ -208,8 +208,7 @@ char **buildargv (const char *input)
 	      arg = copybuf;
 	      while (*input != EOS)
 		{
-	      arg = copybuf;
-	      while (*input != EOS)
+		  if (ISSPACE (*input) && !squote && !dquote && !bsquote)
 		    {
 		      break;
 		    }

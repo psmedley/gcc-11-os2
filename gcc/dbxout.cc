@@ -345,7 +345,7 @@ static void dbxout_begin_prologue (unsigned int, unsigned int, const char *);
 static void dbxout_source_file (const char *);
 static void dbxout_function_end (tree);
 static void dbxout_begin_function (tree);
-static void dbxout_begin_block (unsigned, unsigned);
+static void dbxout_begin_block (unsigned, unsigned, tree);
 static void dbxout_end_block (unsigned, unsigned);
 static void dbxout_function_decl (tree);
 
@@ -1360,7 +1360,7 @@ dbxout_switch_text_section (void)
 /* Describe the beginning of an internal block within a function.  */
 
 static void
-dbxout_begin_block (unsigned int line ATTRIBUTE_UNUSED, unsigned int n)
+dbxout_begin_block (unsigned int line ATTRIBUTE_UNUSED, unsigned int n, tree block ATTRIBUTE_UNUSED)
 {
   emit_pending_bincls_if_required ();
   targetm.asm_out.internal_label (asm_out_file, "LBB", n);

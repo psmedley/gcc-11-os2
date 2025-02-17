@@ -451,9 +451,15 @@ extern void note_variable (const char *s, type_p t, options_p o,
 			   struct fileloc *pos);
 
 /* Lexer and parser routines.  */
+#ifndef __OS2__
 extern int yylex (const char **yylval);
 extern void yybegin (const char *fname);
 extern void yyend (void);
+#else
+int yylex (const char **yylval);
+void yybegin (const char *fname);
+void yyend (void);
+#endif
 extern void parse_file (const char *name);
 extern bool hit_error;
 
