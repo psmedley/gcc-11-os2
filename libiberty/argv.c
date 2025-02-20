@@ -266,6 +266,7 @@ char **buildargv (const char *input)
 			      *arg++ = *input;
 			    }
 			}
+		      input++;
 		    }
 		}
 	      *arg = EOS;
